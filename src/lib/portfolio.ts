@@ -48,9 +48,9 @@ export const LAYOUT = {
   header: { x: 10, y: 8, w: 190, h: 190 * HEADER_ASPECT },
   nameLineY: 53,
   photos: [
-    { x: 10, y: 66, w: 56, h: 75 },
-    { x: 77, y: 81, w: 56, h: 75 },
-    { x: 144, y: 96, w: 56, h: 75 },
+    { x: 10, y: 66, w: 56, h: 90 },
+    { x: 77, y: 81, w: 56, h: 90 },
+    { x: 144, y: 96, w: 56, h: 90 },
   ],
   fields: { x: 14, y: [192, 203, 214] },
   box: { x: 14, y: 224, w: 182, h: 62, r: 9 },

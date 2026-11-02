@@ -30,7 +30,11 @@ export function PortfolioPage({ p, header }: { p: Portfolio; header: string }) {
             className="a4-photo"
             style={{ left: mm(box.x), top: mm(box.y), width: mm(box.w), height: mm(box.h) }}
           >
-            {src ? <img src={src} alt={PHOTO_KEYS[i]} /> : <span className="a4-photo-empty">{PHOTO_KEYS[i]}</span>}
+            {src ? (
+              <img src={src} alt={PHOTO_KEYS[i]} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : (
+              <span className="a4-photo-empty">{PHOTO_KEYS[i]}</span>
+            )}
           </div>
         );
       })}

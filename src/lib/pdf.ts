@@ -15,15 +15,37 @@ async function toDataUrl(src: string): Promise<string> {
   });
 }
 
-async function imgSize(src: string) {
+function fmt(src: string) {
+  return src.startsWith("data:image/png") ? "PNG" : "JPEG";
+}
+
+async function cropToBox(src: string, boxW: number, boxH: number): Promise<string> {
   const img = new Image();
   img.src = src;
   await img.decode();
-  return { w: img.naturalWidth, h: img.naturalHeight };
-}
 
-function fmt(src: string) {
-  return src.startsWith("data:image/png") ? "PNG" : "JPEG";
+  const targetRatio = boxW / boxH;
+  const sourceRatio = img.naturalWidth / img.naturalHeight;
+  let sx = 0;
+  let sy = 0;
+  let sw = img.naturalWidth;
+  let sh = img.naturalHeight;
+
+  if (sourceRatio > targetRatio) {
+    sw = img.naturalHeight * targetRatio;
+    sx = (img.naturalWidth - sw) / 2;
+  } else {
+    sh = img.naturalWidth / targetRatio;
+    sy = (img.naturalHeight - sh) / 2;
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(boxW * 10);
+  canvas.height = Math.round(boxH * 10);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Could not prepare photo for PDF export");
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/jpeg", 0.92);
 }
 
 function line(doc: jsPDF, label: string, value: string, x: number, y: number, len: number) {
@@ -54,21 +76,16 @@ async function drawPage(doc: jsPDF, p: Portfolio, header: string) {
   const cls = [p.className, p.section].filter(Boolean).join(" - ");
   if (cls) doc.text(cls, 144, L.nameLineY - 0.4, { maxWidth: 51 });
 
-  // Photos — contain-fit within each box, thin border around the photo
+  // Photos fill the layout boxes without distorting their proportions.
   for (let i = 0; i < 3; i++) {
     const box = L.photos[i];
     const src = p.photos[PHOTO_KEYS[i]];
     if (!src) continue;
-    const s = await imgSize(src);
-    const scale = Math.min(box.w / s.w, box.h / s.h);
-    const w = s.w * scale;
-    const h = s.h * scale;
-    const x = box.x + (box.w - w) / 2;
-    const y = box.y + (box.h - h) / 2;
-    doc.addImage(src, fmt(src), x, y, w, h, undefined, "FAST");
+    const cropped = await cropToBox(src, box.w, box.h);
+    doc.addImage(cropped, "JPEG", box.x, box.y, box.w, box.h, undefined, "FAST");
     doc.setDrawColor(190);
     doc.setLineWidth(0.25);
-    doc.rect(x, y, w, h);
+    doc.rect(box.x, box.y, box.w, box.h);
   }
 
   doc.setDrawColor(0);
